@@ -450,7 +450,7 @@ int ReadPCDFile(std::string file_name, int resolution) {
   ROS_INFO("t:%d", t);
   for (auto it = global_point_cloud.begin();it != global_point_cloud.end();it++) {
     if ((*it).x > _x_size || (*it).y > _y_size) continue;
-    if (x++ < t) continue;
+    if (++x < t) continue;
     x = 0;
     (*it).z += 2;
     cloudMap.push_back(*it);

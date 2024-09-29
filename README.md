@@ -1,3 +1,28 @@
+
+# 修改
+
+## 自定义地图
+
+
+修改`planner/plan_manage/simulator.xml`中的
+
+- 地图路径
+```xml
+<arg name="nlm/world_file_name" value="你的pcd路径"/>
+```
+
+- 采样率
+```xml
+<param name="nm/resolution" value="40"/>
+```
+表示隔100/40个点采样一次，取值范围为1-100，100为全采样
+(目前只有100、50、33、25...等能整除100的数才有效果)
+
+然后参考[这里](#2-standard-compilation)来启动并加载你的pcd文件
+
+---
+以下为原仓库readme内容
+
 # Note!
 Our recently developed planner [EGO-Swarm](https://github.com/ZJU-FAST-Lab/ego-planner-swarm) is an evolution from EGO-Planner. 
 It is more robust and safe, and therefore, is more recommended to use.
