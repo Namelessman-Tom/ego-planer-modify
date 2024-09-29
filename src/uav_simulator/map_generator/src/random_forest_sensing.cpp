@@ -14,6 +14,7 @@
 #include <sensor_msgs/PointCloud2.h>
 #include <Eigen/Eigen>
 #include <random>
+#include <string>
 
 using namespace std;
 
@@ -24,7 +25,7 @@ vector<float> pointRadiusSquaredDistance;
 
 random_device rd;
 //default_random_engine eng(0);
-default_random_engine eng(rd()); 
+default_random_engine eng(rd());
 uniform_real_distribution<double> rand_x;
 uniform_real_distribution<double> rand_y;
 uniform_real_distribution<double> rand_w;
@@ -135,7 +136,7 @@ void RandomMapGenerate() {
     double theta = rand_theta_(eng);
     Eigen::Matrix3d rotate;
     rotate << cos(theta), -sin(theta), 0.0, sin(theta), cos(theta), 0.0, 0, 0,
-        1;
+      1;
 
     double radius1 = rand_radius_(eng);
     double radius2 = rand_radius2_(eng);
@@ -153,7 +154,7 @@ void RandomMapGenerate() {
         for (int ify = -0; ify <= 0; ++ify)
           for (int ifz = -0; ifz <= 0; ++ifz) {
             cpt_if = cpt + Eigen::Vector3d(ifx * _resolution, ify * _resolution,
-                                           ifz * _resolution);
+              ifz * _resolution);
             cpt_if = rotate * cpt_if + Eigen::Vector3d(x, y, z);
             pt_random.x = cpt_if(0);
             pt_random.y = cpt_if(1);
@@ -207,25 +208,25 @@ void RandomMapGenerateCylinder() {
       i--;
       continue;
     }
-    
+
     bool flag_continue = false;
-    for ( auto p : obs_position )
-      if ( (Eigen::Vector2d(x,y) - p).norm() < _min_dist /*metres*/ )
+    for (auto p : obs_position)
+      if ((Eigen::Vector2d(x, y) - p).norm() < _min_dist /*metres*/)
       {
         i--;
         flag_continue = true;
         break;
       }
-    if ( flag_continue ) continue;
+    if (flag_continue) continue;
 
-    obs_position.push_back( Eigen::Vector2d(x,y) );
-    
+    obs_position.push_back(Eigen::Vector2d(x, y));
+
 
     x = floor(x / _resolution) * _resolution + _resolution / 2.0;
     y = floor(y / _resolution) * _resolution + _resolution / 2.0;
 
-    int widNum = ceil((w*inf) / _resolution);
-    double radius = (w*inf) / 2;
+    int widNum = ceil((w * inf) / _resolution);
+    double radius = (w * inf) / 2;
 
     for (int r = -widNum / 2.0; r < widNum / 2.0; r++)
       for (int s = -widNum / 2.0; s < widNum / 2.0; s++) {
@@ -235,7 +236,7 @@ void RandomMapGenerateCylinder() {
           double temp_x = x + (r + 0.5) * _resolution + 1e-2;
           double temp_y = y + (s + 0.5) * _resolution + 1e-2;
           double temp_z = (t + 0.5) * _resolution + 1e-2;
-          if ( (Eigen::Vector2d(temp_x,temp_y) - Eigen::Vector2d(x,y)).norm() <= radius )
+          if ((Eigen::Vector2d(temp_x, temp_y) - Eigen::Vector2d(x, y)).norm() <= radius)
           {
             pt_random.x = temp_x;
             pt_random.y = temp_y;
@@ -272,7 +273,7 @@ void RandomMapGenerateCylinder() {
     double theta = rand_theta_(eng);
     Eigen::Matrix3d rotate;
     rotate << cos(theta), -sin(theta), 0.0, sin(theta), cos(theta), 0.0, 0, 0,
-        1;
+      1;
 
     double radius1 = rand_radius_(eng);
     double radius2 = rand_radius2_(eng);
@@ -290,7 +291,7 @@ void RandomMapGenerateCylinder() {
         for (int ify = -0; ify <= 0; ++ify)
           for (int ifz = -0; ifz <= 0; ++ifz) {
             cpt_if = cpt + Eigen::Vector3d(ifx * _resolution, ify * _resolution,
-                                           ifz * _resolution);
+              ifz * _resolution);
             cpt_if = rotate * cpt_if + Eigen::Vector3d(x, y, z);
             pt_random.x = cpt_if(0);
             pt_random.y = cpt_if(1);
@@ -324,7 +325,7 @@ void rcvOdometryCallbck(const nav_msgs::Odometry odom) {
   if (odom.child_frame_id == "X" || odom.child_frame_id == "O") return;
   _has_odom = true;
 
-  _state = {odom.pose.pose.position.x,
+  _state = { odom.pose.pose.position.x,
             odom.pose.pose.position.y,
             odom.pose.pose.position.z,
             odom.twist.twist.linear.x,
@@ -332,7 +333,7 @@ void rcvOdometryCallbck(const nav_msgs::Odometry odom) {
             odom.twist.twist.linear.z,
             0.0,
             0.0,
-            0.0};
+            0.0 };
 }
 
 int i = 0;
@@ -360,13 +361,14 @@ void pubSensedPoints() {
     return;
 
   if (kdtreeLocalMap.radiusSearch(searchPoint, _sensing_range,
-                                  pointIdxRadiusSearch,
-                                  pointRadiusSquaredDistance) > 0) {
+    pointIdxRadiusSearch,
+    pointRadiusSquaredDistance) > 0) {
     for (size_t i = 0; i < pointIdxRadiusSearch.size(); ++i) {
       pt = cloudMap.points[pointIdxRadiusSearch[i]];
       localMap.points.push_back(pt);
     }
-  } else {
+  }
+  else {
     ROS_ERROR("[Map server] No obstacles .");
     return;
   }
@@ -416,18 +418,57 @@ void clickCallback(const geometry_msgs::PoseStamped& msg) {
 
   return;
 }
+pcl::PointCloud<pcl::PointXYZ> global_point_cloud;
 
+/// @brief 加载点云文件
+/// @author Namelessman
+/// @param file_name 点云文件路径
+/// @return -1表示加载失败
+int ReadPCDFile(std::string file_name, int resolution) {
+  ROS_INFO("Loding pcd file");
+  int status = pcl::io::loadPCDFile<pcl::PointXYZ>(file_name, global_point_cloud);
+
+  if (status == -1)
+  {
+    // ROS_ERROR("加载点云文件失败");
+    ROS_ERROR("Failed to load pcd file");
+    return -1;
+  }
+
+  // 
+
+  // 降采样同时删除地图大小以外的点
+  int x = 0;
+
+  // 默认
+  resolution == 0 ? resolution = 50 : 0;
+  // 上下界
+  resolution > 100 ? resolution = 100 : 0;
+  resolution < 1 ? resolution = 1 : 0;
+
+  int t = 100 / resolution;
+  ROS_INFO("t:%d", t);
+  for (auto it = global_point_cloud.begin();it != global_point_cloud.end();it++) {
+    if ((*it).x > _x_size || (*it).y > _y_size) continue;
+    if (x++ < t) continue;
+    x = 0;
+    (*it).z += 2;
+    cloudMap.push_back(*it);
+  }
+
+  return 0;
+}
 int main(int argc, char** argv) {
   ros::init(argc, argv, "random_map_sensing");
   ros::NodeHandle n("~");
 
-  _local_map_pub = n.advertise<sensor_msgs::PointCloud2>("/map_generator/local_cloud", 1);
+  _local_map_pub = n.advertise<sensor_msgs::PointCloud2>("/map_generator/odometry", 1);
   _all_map_pub = n.advertise<sensor_msgs::PointCloud2>("/map_generator/global_cloud", 1);
 
   _odom_sub = n.subscribe("odometry", 50, rcvOdometryCallbck);
 
   click_map_pub_ =
-      n.advertise<sensor_msgs::PointCloud2>("/pcl_render_node/local_map", 1);
+    n.advertise<sensor_msgs::PointCloud2>("/pcl_render_node/local_map", 1);
   // ros::Subscriber click_sub = n.subscribe("/goal", 10, clickCallback);
 
   n.param("init_state_x", _init_x, 0.0);
@@ -456,6 +497,14 @@ int main(int argc, char** argv) {
 
   n.param("min_distance", _min_dist, 1.0);
 
+
+  // 地图pcd文件的路径
+  char* _world_file_name = argv[1];
+  // 采样率0-100
+  int _map_resolution;
+  n.param("nm/resolution", _map_resolution, 100);
+
+
   _x_l = -_x_size / 2.0;
   _x_h = +_x_size / 2.0;
 
@@ -468,7 +517,18 @@ int main(int argc, char** argv) {
   ros::Duration(0.5).sleep();
 
   // RandomMapGenerate();
-  RandomMapGenerateCylinder();
+  // RandomMapGenerateCylinder();
+
+  // 读取并发布点云文件的点云数据
+  // @author Namelessman 
+  ROS_INFO("Loading custom map pcd file %s", _world_file_name);
+  int state = ReadPCDFile(_world_file_name, _map_resolution);
+  if (state == -1) {
+    // ROS_INFO("自定义地图加载失败，将随机生成地图");
+    ROS_INFO("Failed to load custom map, generating random map instead.");
+    RandomMapGenerateCylinder();
+    //return;
+  }
 
   ros::Rate loop_rate(_sense_rate);
 

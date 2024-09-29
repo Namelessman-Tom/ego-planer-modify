@@ -62,33 +62,33 @@ void
 SO3ControlNodelet::publishSO3Command(void)
 {
   controller_.calculateControl(des_pos_, des_vel_, des_acc_, des_yaw_,
-                               des_yaw_dot_, kx_, kv_);
+    des_yaw_dot_, kx_, kv_);
 
-  const Eigen::Vector3d&    force       = controller_.getComputedForce();
+  const Eigen::Vector3d& force = controller_.getComputedForce();
   const Eigen::Quaterniond& orientation = controller_.getComputedOrientation();
 
   quadrotor_msgs::SO3Command::Ptr so3_command(
     new quadrotor_msgs::SO3Command); //! @note memory leak?
-  so3_command->header.stamp    = ros::Time::now();
+  so3_command->header.stamp = ros::Time::now();
   so3_command->header.frame_id = frame_id_;
-  so3_command->force.x         = force(0);
-  so3_command->force.y         = force(1);
-  so3_command->force.z         = force(2);
-  so3_command->orientation.x   = orientation.x();
-  so3_command->orientation.y   = orientation.y();
-  so3_command->orientation.z   = orientation.z();
-  so3_command->orientation.w   = orientation.w();
+  so3_command->force.x = force(0);
+  so3_command->force.y = force(1);
+  so3_command->force.z = force(2);
+  so3_command->orientation.x = orientation.x();
+  so3_command->orientation.y = orientation.y();
+  so3_command->orientation.z = orientation.z();
+  so3_command->orientation.w = orientation.w();
   for (int i = 0; i < 3; i++)
   {
-    so3_command->kR[i]  = kR_[i];
+    so3_command->kR[i] = kR_[i];
     so3_command->kOm[i] = kOm_[i];
   }
-  so3_command->aux.current_yaw          = current_yaw_;
-  so3_command->aux.kf_correction        = corrections_[0];
+  so3_command->aux.current_yaw = current_yaw_;
+  so3_command->aux.kf_correction = corrections_[0];
   so3_command->aux.angle_corrections[0] = corrections_[1];
   so3_command->aux.angle_corrections[1] = corrections_[2];
-  so3_command->aux.enable_motors        = enable_motors_;
-  so3_command->aux.use_external_yaw     = use_external_yaw_;
+  so3_command->aux.enable_motors = enable_motors_;
+  so3_command->aux.use_external_yaw = use_external_yaw_;
   so3_command_pub_.publish(so3_command);
 }
 
@@ -96,24 +96,25 @@ void
 SO3ControlNodelet::position_cmd_callback(
   const quadrotor_msgs::PositionCommand::ConstPtr& cmd)
 {
-  des_pos_ = Eigen::Vector3d(cmd->position.x, cmd->position.y, cmd->position.z);
+  des_pos_ = Eigen::Vector3d(cmd->position.x, cmd->position.y, init_z_);
+  // des_pos_ = Eigen::Vector3d(cmd->position.x, cmd->position.y, cmd->position.z);
   des_vel_ = Eigen::Vector3d(cmd->velocity.x, cmd->velocity.y, cmd->velocity.z);
   des_acc_ = Eigen::Vector3d(cmd->acceleration.x, cmd->acceleration.y,
-                             cmd->acceleration.z);
+    cmd->acceleration.z);
 
-  if ( cmd->kx[0] > 1e-5 || cmd->kx[1] > 1e-5 || cmd->kx[2] > 1e-5 )
+  if (cmd->kx[0] > 1e-5 || cmd->kx[1] > 1e-5 || cmd->kx[2] > 1e-5)
   {
     kx_ = Eigen::Vector3d(cmd->kx[0], cmd->kx[1], cmd->kx[2]);
   }
-  if ( cmd->kv[0] > 1e-5 || cmd->kv[1] > 1e-5 || cmd->kv[2] > 1e-5 )
+  if (cmd->kv[0] > 1e-5 || cmd->kv[1] > 1e-5 || cmd->kv[2] > 1e-5)
   {
     kv_ = Eigen::Vector3d(cmd->kv[0], cmd->kv[1], cmd->kv[2]);
   }
 
-  des_yaw_              = cmd->yaw;
-  des_yaw_dot_          = cmd->yaw_dot;
+  des_yaw_ = cmd->yaw;
+  des_yaw_dot_ = cmd->yaw_dot;
   position_cmd_updated_ = true;
-  position_cmd_init_    = true;
+  position_cmd_init_ = true;
 
   publishSO3Command();
 }
@@ -122,11 +123,11 @@ void
 SO3ControlNodelet::odom_callback(const nav_msgs::Odometry::ConstPtr& odom)
 {
   const Eigen::Vector3d position(odom->pose.pose.position.x,
-                                 odom->pose.pose.position.y,
-                                 odom->pose.pose.position.z);
+    odom->pose.pose.position.y,
+    odom->pose.pose.position.z);
   const Eigen::Vector3d velocity(odom->twist.twist.linear.x,
-                                 odom->twist.twist.linear.y,
-                                 odom->twist.twist.linear.z);
+    odom->twist.twist.linear.y,
+    odom->twist.twist.linear.z);
 
   current_yaw_ = tf::getYaw(odom->pose.pose.orientation);
 
@@ -145,14 +146,14 @@ SO3ControlNodelet::odom_callback(const nav_msgs::Odometry::ConstPtr& odom)
       publishSO3Command();
     position_cmd_updated_ = false;
   }
-  else if ( init_z_ > -9999.0 )
+  else if (init_z_ > -9999.0)
   {
     des_pos_ = Eigen::Vector3d(init_x_, init_y_, init_z_);
-    des_vel_ = Eigen::Vector3d(0,0,0);
-    des_acc_ = Eigen::Vector3d(0,0,0);
+    des_vel_ = Eigen::Vector3d(0, 0, 0);
+    des_acc_ = Eigen::Vector3d(0, 0, 0);
     publishSO3Command();
   }
-  
+
 }
 
 void
@@ -179,8 +180,8 @@ void
 SO3ControlNodelet::imu_callback(const sensor_msgs::Imu& imu)
 {
   const Eigen::Vector3d acc(imu.linear_acceleration.x,
-                            imu.linear_acceleration.y,
-                            imu.linear_acceleration.z);
+    imu.linear_acceleration.y,
+    imu.linear_acceleration.z);
   controller_.setAcc(acc);
 }
 
@@ -223,20 +224,20 @@ SO3ControlNodelet::onInit(void)
   so3_command_pub_ = n.advertise<quadrotor_msgs::SO3Command>("so3_cmd", 10);
 
   odom_sub_ = n.subscribe("odom", 10, &SO3ControlNodelet::odom_callback, this,
-                          ros::TransportHints().tcpNoDelay());
+    ros::TransportHints().tcpNoDelay());
   position_cmd_sub_ =
     n.subscribe("position_cmd", 10, &SO3ControlNodelet::position_cmd_callback,
-                this, ros::TransportHints().tcpNoDelay());
+      this, ros::TransportHints().tcpNoDelay());
 
   enable_motors_sub_ =
     n.subscribe("motors", 2, &SO3ControlNodelet::enable_motors_callback, this,
-                ros::TransportHints().tcpNoDelay());
+      ros::TransportHints().tcpNoDelay());
   corrections_sub_ =
     n.subscribe("corrections", 10, &SO3ControlNodelet::corrections_callback,
-                this, ros::TransportHints().tcpNoDelay());
+      this, ros::TransportHints().tcpNoDelay());
 
   imu_sub_ = n.subscribe("imu", 10, &SO3ControlNodelet::imu_callback, this,
-                         ros::TransportHints().tcpNoDelay());
+    ros::TransportHints().tcpNoDelay());
 }
 
 #include <pluginlib/class_list_macros.h>

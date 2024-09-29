@@ -63,7 +63,7 @@ double _SenseRate;
 double _sensing_range;
 
 // ros::Timer vis_map;
-bool map_ok    = false;
+bool map_ok = false;
 bool _has_odom = false;
 
 sensor_msgs::PointCloud2       globalMap_pcd;
@@ -107,9 +107,9 @@ fixedMapGenerate()
   {
     double x, y, z;
     double lx, ly, lz;
-    x  = (obstacle_list[i].first)[0];
-    y  = (obstacle_list[i].first)[1];
-    z  = (obstacle_list[i].first)[2];
+    x = (obstacle_list[i].first)[0];
+    y = (obstacle_list[i].first)[1];
+    z = (obstacle_list[i].first)[2];
     lx = (obstacle_list[i].second)[0];
     ly = (obstacle_list[i].second)[1];
     lz = (obstacle_list[i].second)[2];
@@ -119,11 +119,11 @@ fixedMapGenerate()
     int num_mesh_z = ceil(lz / _resolution);
 
     int left_x, right_x, left_y, right_y, left_z, right_z;
-    left_x  = -num_mesh_x / 2;
+    left_x = -num_mesh_x / 2;
     right_x = num_mesh_x / 2;
-    left_y  = -num_mesh_y / 2;
+    left_y = -num_mesh_y / 2;
     right_y = num_mesh_y / 2;
-    left_z  = 0;
+    left_z = 0;
     right_z = num_mesh_z;
 
     for (int r = left_x; r < right_x; r++)
@@ -132,8 +132,8 @@ fixedMapGenerate()
         for (int t = left_z; t < right_z; t++)
         {
           if ((r - left_x) * (r - right_x + 1) * (s - left_y) *
-                (s - right_y + 1) * (t - left_z) * (t - right_z + 1) ==
-              0)
+            (s - right_y + 1) * (t - left_z) * (t - right_z + 1) ==
+            0)
           {
             pt_insert.x = x + r * _resolution;
             pt_insert.y = y + s * _resolution;
@@ -144,8 +144,8 @@ fixedMapGenerate()
       }
   }
 
-  cloudMap.width    = cloudMap.points.size();
-  cloudMap.height   = 1;
+  cloudMap.width = cloudMap.points.size();
+  cloudMap.height = 1;
   cloudMap.is_dense = true;
 
   ROS_WARN("Finished generate random map ");
@@ -159,7 +159,7 @@ rcvOdometryCallbck(const nav_msgs::Odometry odom)
 {
   if (odom.child_frame_id == "X" || odom.child_frame_id == "O")
     return;
-  _odom     = odom;
+  _odom = odom;
   _has_odom = true;
 
   _state = { _odom.pose.pose.position.x,
@@ -216,8 +216,8 @@ pubSensedPoints()
   pcl::PointXYZ ptInNoflation;
 
   if (kdtreeLocalMap.radiusSearch(searchPoint, _sensing_range,
-                                  pointIdxRadiusSearch,
-                                  pointRadiusSquaredDistance) > 0)
+    pointIdxRadiusSearch,
+    pointRadiusSquaredDistance) > 0)
   {
     for (size_t i = 0; i < pointIdxRadiusSearch.size(); ++i)
     {
@@ -238,8 +238,8 @@ pubSensedPoints()
   pt_fix.z = 0.0;
   localMap.points.push_back(pt_fix);
 
-  localMap.width    = localMap.points.size();
-  localMap.height   = 1;
+  localMap.width = localMap.points.size();
+  localMap.height = 1;
   localMap.is_dense = true;
 
   pcl::toROSMsg(localMap, localMap_pcd);

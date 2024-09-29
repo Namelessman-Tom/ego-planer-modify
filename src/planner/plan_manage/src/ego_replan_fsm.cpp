@@ -4,7 +4,7 @@
 namespace ego_planner
 {
 
-  void EGOReplanFSM::init(ros::NodeHandle &nh)
+  void EGOReplanFSM::init(ros::NodeHandle& nh)
   {
     current_wp_ = 0;
     exec_state_ = FSM_EXEC_STATE::INIT;
@@ -106,7 +106,7 @@ namespace ego_planner
     }
   }
 
-  void EGOReplanFSM::waypointCallback(const nav_msgs::PathConstPtr &msg)
+  void EGOReplanFSM::waypointCallback(const nav_msgs::PathConstPtr& msg)
   {
     if (msg->poses[0].pose.position.z < -0.1)
       return;
@@ -152,7 +152,7 @@ namespace ego_planner
     }
   }
 
-  void EGOReplanFSM::odometryCallback(const nav_msgs::OdometryConstPtr &msg)
+  void EGOReplanFSM::odometryCallback(const nav_msgs::OdometryConstPtr& msg)
   {
     odom_pos_(0) = msg->pose.pose.position.x;
     odom_pos_(1) = msg->pose.pose.position.y;
@@ -180,7 +180,7 @@ namespace ego_planner
     else
       continously_called_times_ = 1;
 
-    static string state_str[7] = {"INIT", "WAIT_TARGET", "GEN_NEW_TRAJ", "REPLAN_TRAJ", "EXEC_TRAJ", "EMERGENCY_STOP"};
+    static string state_str[7] = { "INIT", "WAIT_TARGET", "GEN_NEW_TRAJ", "REPLAN_TRAJ", "EXEC_TRAJ", "EMERGENCY_STOP" };
     int pre_s = int(exec_state_);
     exec_state_ = new_state;
     cout << "[" + pos_call + "]: from " + state_str[pre_s] + " to " + state_str[int(new_state)] << endl;
@@ -193,12 +193,12 @@ namespace ego_planner
 
   void EGOReplanFSM::printFSMExecState()
   {
-    static string state_str[7] = {"INIT", "WAIT_TARGET", "GEN_NEW_TRAJ", "REPLAN_TRAJ", "EXEC_TRAJ", "EMERGENCY_STOP"};
+    static string state_str[7] = { "INIT", "WAIT_TARGET", "GEN_NEW_TRAJ", "REPLAN_TRAJ", "EXEC_TRAJ", "EMERGENCY_STOP" };
 
     cout << "[FSM]: state: " + state_str[int(exec_state_)] << endl;
   }
 
-  void EGOReplanFSM::execFSMCallback(const ros::TimerEvent &e)
+  void EGOReplanFSM::execFSMCallback(const ros::TimerEvent& e)
   {
 
     static int fsm_num = 0;
@@ -288,7 +288,7 @@ namespace ego_planner
     case EXEC_TRAJ:
     {
       /* determine if need to replan */
-      LocalTrajData *info = &planner_manager_->local_data_;
+      LocalTrajData* info = &planner_manager_->local_data_;
       ros::Time time_now = ros::Time::now();
       double t_cur = (time_now - info->start_time_).toSec();
       t_cur = min(info->duration_, t_cur);
@@ -345,7 +345,7 @@ namespace ego_planner
   bool EGOReplanFSM::planFromCurrentTraj()
   {
 
-    LocalTrajData *info = &planner_manager_->local_data_;
+    LocalTrajData* info = &planner_manager_->local_data_;
     ros::Time time_now = ros::Time::now();
     double t_cur = (time_now - info->start_time_).toSec();
 
@@ -374,9 +374,9 @@ namespace ego_planner
     return true;
   }
 
-  void EGOReplanFSM::checkCollisionCallback(const ros::TimerEvent &e)
+  void EGOReplanFSM::checkCollisionCallback(const ros::TimerEvent& e)
   {
-    LocalTrajData *info = &planner_manager_->local_data_;
+    LocalTrajData* info = &planner_manager_->local_data_;
     auto map = planner_manager_->grid_map_;
 
     if (exec_state_ == WAIT_TARGET || info->start_time_.toSec() < 1e-5)
@@ -423,7 +423,7 @@ namespace ego_planner
     getLocalTarget();
 
     bool plan_success =
-        planner_manager_->reboundReplan(start_pt_, start_vel_, start_acc_, local_target_pt_, local_target_vel_, (have_new_target_ || flag_use_poly_init), flag_randomPolyTraj);
+      planner_manager_->reboundReplan(start_pt_, start_vel_, start_acc_, local_target_pt_, local_target_vel_, (have_new_target_ || flag_use_poly_init), flag_randomPolyTraj);
     have_new_target_ = false;
 
     cout << "final_plan_success=" << plan_success << endl;
